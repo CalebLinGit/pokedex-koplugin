@@ -5,6 +5,8 @@ local TextBoxWidget = require("ui/widget/textboxwidget")
 local TextWidget = require("ui/widget/textwidget")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
+local HorizontalSpan = require("ui/widget/horizontalspan")
+local VerticalSpan = require("ui/widget/verticalspan")
 local FrameContainer = require("ui/widget/container/framecontainer")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Blitbuffer = require("ffi/blitbuffer")
@@ -74,7 +76,7 @@ function Pokedex:showPopup(entry)
     local top_row = HorizontalGroup:new{
         align = "top",
         image_widget,
-        HorizontalGroup:new{ width = padding },
+        HorizontalSpan:new{ width = padding },
         header,
     }
 
@@ -108,9 +110,9 @@ function Pokedex:showPopup(entry)
         VerticalGroup:new{
             align = "left",
             top_row,
-            VerticalGroup:new{ height = padding },
+            VerticalSpan:new{ width = padding },
             divider,
-            VerticalGroup:new{ height = padding },
+            VerticalSpan:new{ width = padding },
             desc,
         }
     }
