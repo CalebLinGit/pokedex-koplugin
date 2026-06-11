@@ -1,4 +1,5 @@
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
+local InputContainer = require("ui/widget/container/inputcontainer")
 local UIManager = require("ui/uimanager")
 local ImageWidget = require("ui/widget/imagewidget")
 local TextBoxWidget = require("ui/widget/textboxwidget")
@@ -8,6 +9,8 @@ local HorizontalSpan = require("ui/widget/horizontalspan")
 local VerticalSpan = require("ui/widget/verticalspan")
 local FrameContainer = require("ui/widget/container/framecontainer")
 local CenterContainer = require("ui/widget/container/centercontainer")
+local GestureRange = require("ui/gesturerange")
+local Event = require("ui/event")
 local Blitbuffer = require("ffi/blitbuffer")
 local Screen = require("device").screen
 local Font = require("ui/font")
@@ -152,19 +155,31 @@ function Pokedex:showPopup(entry)
         }
     }
 
-    -- Center on screen
-    local popup = CenterContainer:new{
+    -- Center content on screen, wrapped in InputContainer to handle tap-to-close
+    local popup
+    popup = InputContainer:new{
         dimen = Screen:getSize(),
-        content,
+        ges_events = {
+            TapClose = {
+                GestureRange:new{
+                    ges = "tap",
+                    range = Screen:getSize(),
+                },
+            },
+        },
+        CenterContainer:new{
+            dimen = Screen:getSize(),
+            content,
+        },
     }
 
-    -- Close on tap
-    popup.onTapClose = function()
-        UIManager:close(popup)
+    function popup:onTapClose()
+        UIManager:close(self)
         return true
     end
-    popup.onAnyKeyPressed = function()
-        UIManager:close(popup)
+
+    function popup:onAnyKeyPressed()
+        UIManager:close(self)
         return true
     end
 
@@ -172,7 +187,7 @@ function Pokedex:showPopup(entry)
 end
 
 function Pokedex:onCloseWidget()
-    if self._patched_dict and self._orig_lookup ~= nil then
+    if self._patched_dict then
         self._patched_dict.onLookupWord = self._orig_lookup
         self._patched_dict = nil
         self._orig_lookup = nil
