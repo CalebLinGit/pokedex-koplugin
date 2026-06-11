@@ -45,22 +45,29 @@ function Pokedex:lookup(word)
 end
 
 function Pokedex:init()
+    -- Hook is installed in onReaderReady when the dictionary module is available
+end
+
+function Pokedex:onReaderReady()
     local dict = self.ui.dictionary
     if not dict then
         logger.warn("Pokedex: ReaderDictionary not found, hook not installed")
         return
     end
 
-    -- Guard against double-patching (e.g., on document re-open)
+    -- Guard against double-patching (e.g., on document re-open with same dict instance)
     if self._patched_dict == dict then
-        logger.info("Pokedex: already patched this dictionary instance")
         return
+    end
+
+    -- Restore previous patch if dict instance changed
+    if self._patched_dict then
+        self._patched_dict.onLookupWord = self._orig_lookup
     end
 
     local orig_lookup = dict.onLookupWord
     local pokedex = self
 
-    -- Stash the original and dict for cleanup
     self._orig_lookup = orig_lookup
     self._patched_dict = dict
 
@@ -68,9 +75,8 @@ function Pokedex:init()
         local entry = pokedex:lookup(word)
         if entry then
             pokedex:showPopup(entry)
-            return true  -- stop propagation; skip normal dictionary
+            return true
         end
-        -- Nil guard: only call orig_lookup if it exists
         if orig_lookup then
             return orig_lookup(d, word, ...)
         end
