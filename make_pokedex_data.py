@@ -4,7 +4,7 @@ Generate pokedex.koplugin/data/ from a local clone of Purukitto/pokemon-data.jso
 Usage: python make_pokedex_data.py <path-to-pokemon-data.json-repo>
 """
 
-import json, sys, shutil
+import json, sys
 from pathlib import Path
 from PIL import Image
 
@@ -17,6 +17,9 @@ def escape_lua(s):
     return s.replace("\\", "\\\\").replace('"', '\\"').replace("\n", " ")
 
 def main():
+    if not REPO.exists():
+        sys.exit(f"Error: data repo not found at {REPO}\nUsage: python make_pokedex_data.py <path-to-pokemon-data.json>")
+
     data = json.loads((REPO / "pokedex.json").read_text(encoding="utf-8"))
     IMG_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -31,7 +34,7 @@ def main():
         desc  = entry.get("description", "")
 
         lua_entry = (
-            f'  id={pid}, en="{escape_lua(en)}", '
+            f'id={pid}, en="{escape_lua(en)}", '
             f'zh="{escape_lua(zh)}", type="{escape_lua(typ)}", '
             f'species="{escape_lua(spec)}", desc="{escape_lua(desc)}"'
         )
@@ -50,6 +53,8 @@ def main():
             img = img.resize(IMG_SIZE, Image.LANCZOS)
             img.save(dst, "PNG", optimize=True)
             print(f"  #{pid} {en}")
+        elif not src.exists():
+            print(f"  WARNING: missing source image for #{pid} {en}")
 
     lua_lines.append("}")
     (OUT_DIR / "pokedex.lua").write_text("\n".join(lua_lines), encoding="utf-8")
