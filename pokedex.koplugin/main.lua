@@ -36,8 +36,10 @@ end
 
 function Pokedex:lookup(word)
     if not word or word == "" then return nil end
+    local trimmed = word:match("^%s*(.-)%s*$")
+    if not trimmed or trimmed == "" then return nil end
     local data = self:_loadData()
-    return data[word:lower()]
+    return data[trimmed:lower()]
 end
 
 function Pokedex:init()
@@ -47,8 +49,18 @@ function Pokedex:init()
         return
     end
 
+    -- Guard against double-patching (e.g., on document re-open)
+    if self._patched_dict == dict then
+        logger.info("Pokedex: already patched this dictionary instance")
+        return
+    end
+
     local orig_lookup = dict.onLookupWord
     local pokedex = self
+
+    -- Stash the original and dict for cleanup
+    self._orig_lookup = orig_lookup
+    self._patched_dict = dict
 
     dict.onLookupWord = function(d, word, ...)
         local entry = pokedex:lookup(word)
@@ -56,7 +68,10 @@ function Pokedex:init()
             pokedex:showPopup(entry)
             return true  -- stop propagation; skip normal dictionary
         end
-        return orig_lookup(d, word, ...)
+        -- Nil guard: only call orig_lookup if it exists
+        if orig_lookup then
+            return orig_lookup(d, word, ...)
+        end
     end
 
     logger.info("Pokedex: hook installed on ReaderDictionary.onLookupWord")
@@ -157,6 +172,11 @@ function Pokedex:showPopup(entry)
 end
 
 function Pokedex:onCloseWidget()
+    if self._patched_dict and self._orig_lookup ~= nil then
+        self._patched_dict.onLookupWord = self._orig_lookup
+        self._patched_dict = nil
+        self._orig_lookup = nil
+    end
 end
 
 return Pokedex
