@@ -2,7 +2,6 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local UIManager = require("ui/uimanager")
 local ImageWidget = require("ui/widget/imagewidget")
 local TextBoxWidget = require("ui/widget/textboxwidget")
-local TextWidget = require("ui/widget/textwidget")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan = require("ui/widget/horizontalspan")
@@ -13,7 +12,6 @@ local Blitbuffer = require("ffi/blitbuffer")
 local Screen = require("device").screen
 local Font = require("ui/font")
 local logger = require("logger")
-local Geom = require("ui/geometry")
 
 local Pokedex = WidgetContainer:extend{
     name = "pokedex",
@@ -54,6 +52,9 @@ function Pokedex:showPopup(entry)
 
     -- Image
     local img_path = plugin_dir .. "/data/hires/" .. entry.id .. ".png"
+    if not io.open(img_path, "r") then
+        logger.warn("Pokedex: missing image for #" .. entry.id)
+    end
     local image_widget = ImageWidget:new{
         file = img_path,
         width = img_size,
@@ -92,6 +93,7 @@ function Pokedex:showPopup(entry)
             margin = 0,
             padding = 0,
             bordersize = 0,
+            background = Blitbuffer.COLOR_BLACK,
         }
     }
 
@@ -123,8 +125,6 @@ function Pokedex:showPopup(entry)
         content,
     }
 
-    UIManager:show(popup)
-
     -- Close on tap
     popup.onTapClose = function()
         UIManager:close(popup)
@@ -134,6 +134,8 @@ function Pokedex:showPopup(entry)
         UIManager:close(popup)
         return true
     end
+
+    UIManager:show(popup)
 end
 
 function Pokedex:onCloseWidget()
