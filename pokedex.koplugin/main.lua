@@ -10,7 +10,6 @@ local VerticalSpan = require("ui/widget/verticalspan")
 local FrameContainer = require("ui/widget/container/framecontainer")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local GestureRange = require("ui/gesturerange")
-local Event = require("ui/event")
 local Blitbuffer = require("ffi/blitbuffer")
 local Screen = require("device").screen
 local Font = require("ui/font")
