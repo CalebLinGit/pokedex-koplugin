@@ -41,7 +41,25 @@ function Pokedex:lookup(word)
 end
 
 function Pokedex:init()
-    -- hook installed in Task 5
+    local dict = self.ui.dictionary
+    if not dict then
+        logger.warn("Pokedex: ReaderDictionary not found, hook not installed")
+        return
+    end
+
+    local orig_lookup = dict.onLookupWord
+    local pokedex = self
+
+    dict.onLookupWord = function(d, word, ...)
+        local entry = pokedex:lookup(word)
+        if entry then
+            pokedex:showPopup(entry)
+            return true  -- stop propagation; skip normal dictionary
+        end
+        return orig_lookup(d, word, ...)
+    end
+
+    logger.info("Pokedex: hook installed on ReaderDictionary.onLookupWord")
 end
 
 function Pokedex:showPopup(entry)
